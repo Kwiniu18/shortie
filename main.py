@@ -1,10 +1,8 @@
-from typing import Union, Annotated
-
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 
 from fastapi.responses import RedirectResponse
 
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 
 import shortuuid
 
@@ -18,30 +16,28 @@ url_list = {
 async def root():
     return {"message": "Hello World"}
 
+class Item(BaseModel):
+    url: HttpUrl
 
-def make_url(user_url):
-    pre = "127.0.0.1:8000/"
-    url_list[shorter] = user_url
+@app.post("/shortie/{user_url.url}")
+async def short_url(user_url: Item):
+ 
+    short_url = (shortuuid.ShortUUID().random(length=5))
+    url_list[short_url] = user_url.url
     return {
         
-    "short-url":(pre + (shortuuid.ShortUUID().random(length=5))) , 
-    "link": user_url
-    
+    "short-url":short_url , 
+    "link": user_url.url
     }
 
 
-def item(url: str):
-    return make_url(url)
-
-
-@app.post("/shortie/{url}")
-async def short_url(shortie: Annotated[dict, Depends(item)]):
-    return shortie
-
 @app.get("/get/{uuid}")
 def get_url(uuid: str):
-    print(url_list)
     if uuid in url_list:
         return RedirectResponse(
             url = (url_list[uuid])
             )
+
+@app.get("/readdictionary")
+def read_dictionary():
+    return url_list
